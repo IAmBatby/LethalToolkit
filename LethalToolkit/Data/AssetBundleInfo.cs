@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -17,17 +18,18 @@ namespace LethalToolkit
     public class AssetBundleInfo
     {
         public AssetBundleBuild assetBundleBuild;
-        public List<BundledAssetInfo> directAssetPaths = new List<BundledAssetInfo>();
-        public List<BundledAssetInfo> indirectAssetPaths = new List<BundledAssetInfo>();
+        public List<BundledAssetInfo> directBundledAssetInfos = new List<BundledAssetInfo>();
+        public List<BundledAssetInfo> indirectBundledAssetInfos = new List<BundledAssetInfo>();
+        public List<BundledAssetInfo> bundledAssetInfos => directBundledAssetInfos.Concat(indirectBundledAssetInfos).ToList();
 
         public List<string> AssetPaths
         {
             get
             {
                 List<string> paths = new List<string>();
-                foreach (BundledAssetInfo directAsset in directAssetPaths)
+                foreach (BundledAssetInfo directAsset in directBundledAssetInfos)
                     paths.Add(directAsset.assetPath);
-                foreach (BundledAssetInfo indirectAsset in indirectAssetPaths)
+                foreach (BundledAssetInfo indirectAsset in indirectBundledAssetInfos)
                     paths.Add(indirectAsset.assetPath);
                 return (paths);
             }

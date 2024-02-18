@@ -29,7 +29,7 @@ namespace LethalToolkit
         public string lethalCompanyAssetBundleDirectory;
 
         public AssetBundleInfoEvent onBeforeAssetBundleBuild;
-        public UnityEvent onAfterAssetBundleBuild;
+        public AssetBundleInfoEvent onAfterAssetBundleBuild;
 
         public Color firstColor;
         public Color secondColor;
@@ -52,10 +52,13 @@ namespace LethalToolkit
         public float gameObjectNameWidth;
         public float componentIconsWidth;
 
+        public int hierarchyOffset;
+
         public int headerFontSize;
         public int textFontSize;
 
         public ExtendedLevel lastSelectedExtendedLevel;
+        public ExtendedDungeonFlow lastSelectedExtendedDungeonFlow;
 
         public static void DebugAssetBundleAssets(AssetBundleInfo assetBundleInfo)
         {
@@ -63,11 +66,11 @@ namespace LethalToolkit
             string debugString = "Report of all assets found in AssetBundle: " + "<b>" + assetBundleInfo.assetBundleBuild.assetBundleName + assetBundleInfo.assetBundleBuild.assetBundleVariant + "</b>" + "\n" + "\n";
 
             debugString += "<b> Directly Labeled Assets: </b>" + "\n";
-            foreach (BundledAssetInfo directAsset in assetBundleInfo.directAssetPaths)
+            foreach (BundledAssetInfo directAsset in assetBundleInfo.directBundledAssetInfos)
                 debugString += directAsset.assetName + " (" + directAsset.assetSource + ") (" + directAsset.contentReferenceType.ToString() + ") (" + directAsset.contentSourceType.ToString() + ")" + "\n";
 
             debugString += "\n" + "<b> Indirectly Labeled Assets: </b>" + "\n";
-            foreach (BundledAssetInfo indirectAsset in assetBundleInfo.indirectAssetPaths)
+            foreach (BundledAssetInfo indirectAsset in assetBundleInfo.indirectBundledAssetInfos)
                 debugString += indirectAsset.assetName + " (" + indirectAsset.assetSource + ") (" + indirectAsset.contentReferenceType.ToString() + ") (" + indirectAsset.contentSourceType.ToString() + ")" + "\n";
 
             Debug.Log(debugString);
@@ -112,6 +115,16 @@ namespace LethalToolkit
                 debugString += AssetDatabase.GUIDToAssetPath(assetPath) + "\n";
 
             Debug.Log(debugString);
+        }
+
+        public static void DisableMeshColliders(AssetBundleInfo assetBundleInfo)
+        {
+            ToggleMeshColliders.DisableMeshColliders(assetBundleInfo);
+        }
+
+        public static void EnableMeshColliders(AssetBundleInfo assetsBundleInfo)
+        {
+            ToggleMeshColliders.EnableMeshColliders(assetsBundleInfo);
         }
     }
 }

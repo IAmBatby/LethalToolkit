@@ -106,3 +106,4 @@ C:\Projects\LethalCompany\LethalToolkit\LethalToolkit\LethalToolkit\bin\Debug\ne
 C:\Projects\LethalCompany\LethalToolkit\LethalToolkit\LethalToolkit\bin\Debug\netstandard2.1\Unity.Collections.LowLevel.ILSupport.dll
 C:\Projects\LethalCompany\LethalToolkit\LethalToolkit\LethalToolkit\bin\Debug\netstandard2.1\Unity.Burst.Unsafe.dll
 C:\Projects\LethalCompany\LethalToolkit\LethalToolkit\LethalToolkit\bin\Debug\netstandard2.1\Unity.Timeline.dll
+C:\Projects\LethalCompany\LethalToolkit\LethalToolkit\LethalToolkit\obj\Debug\netstandard2.1\LethalToolkit.sourcelink.json

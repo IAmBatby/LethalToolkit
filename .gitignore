@@ -14,6 +14,9 @@
 /[Uu]ser[Ss]ettings/
 /Properties/
 
+/bin/**
+!/bin/**/
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
@@ -74,8 +77,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 /Unity
-/LethalLevelLoader/bin
-/LethalLevelLoader/obj
 Unity/LethalCompanyProject/.vsconfig
 Unity/LethalCompanyProject/Assets/Scenes.meta
 Unity/LethalCompanyProject/Assets/Scenes/SampleScene.unity

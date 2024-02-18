@@ -14,7 +14,7 @@ namespace LethalToolkit.AssetBundleBuilder
     public class AssetBundleBuilderWindow : EditorWindow
     {
         private static bool buildAllBundles = true;
-        private static Dictionary<string, bool> assetBundleDict = new Dictionary<string, bool>();
+        private static Dictionary<string, bool> assetBundleDict;
 
         public static List<AssetBundleInfo> assetBundleInfos = new List<AssetBundleInfo>();
 
@@ -37,8 +37,8 @@ namespace LethalToolkit.AssetBundleBuilder
             }
         }
 
-        public static string assetBundleDirectory = string.Empty;
-        public static string modulesDirectory = string.Empty;
+        public static string assetBundleDirectory = LethalToolkitManager.Instance.LethalToolkitSettings.lethalCompanyAssetBundleDirectory;
+        public static string modulesDirectory = LethalToolkitManager.Instance.LethalToolkitSettings.unityAssetBundleDirectory;
         enum compressionOption { NormalCompression = 0, FastCompression = 1, Uncompressed = 2 }
         compressionOption compressionMode = compressionOption.NormalCompression;
         bool _64BitsMode;
@@ -46,7 +46,7 @@ namespace LethalToolkit.AssetBundleBuilder
 
         public Vector2 scrollPos;
 
-        LethalToolkitSettings settings = LethalToolkitManager.Instance.LethalToolkitSettings;
+        static LethalToolkitSettings settings = LethalToolkitManager.Instance.LethalToolkitSettings;
 
         public static AssetBundleInfo lastAssetBundleInfo;
 
@@ -62,22 +62,21 @@ namespace LethalToolkit.AssetBundleBuilder
         [MenuItem("LethalToolkit/Tools/AssetBundle Builder")]
         public static void OpenWindow()
         {
-            RefreshAssetBundlesDictionary();
+            CloseWindow();
 
             window = GetWindow<AssetBundleBuilderWindow>("LethalToolkit: AssetBundle Builder");
-            assetBundleDirectory = LethalToolkitManager.Instance.LethalToolkitSettings.lethalCompanyAssetBundleDirectory;
-            modulesDirectory = LethalToolkitManager.Instance.LethalToolkitSettings.unityAssetBundleDirectory;
         }
 
         public static void CloseWindow()
         {
-            window.Close();
+            if (window != null)
+                window.Close();
             window = null;
         }
 
         public static void RefreshAssetBundlesDictionary()
         {
-            assetBundleDict.Clear();
+            assetBundleDict = new Dictionary<string, bool>();
             foreach (string assetBundleName in AssetDatabase.GetAllAssetBundleNames())
                 if (assetBundleName.Contains(SelectedVariantName))
                     assetBundleDict.Add(assetBundleName, false);
@@ -87,15 +86,14 @@ namespace LethalToolkit.AssetBundleBuilder
         {
             if (window != null)
             {
-                CloseWindow();
-                OpenWindow();
+                //CloseWindow();
+                //OpenWindow();
             }    
         }
 
         void OnEnable()
         {
-            AssemblyReloadEvents.afterAssemblyReload -= OnAssemblyReload;
-            AssemblyReloadEvents.afterAssemblyReload += OnAssemblyReload;
+            RefreshAssetBundlesDictionary();
         }
 
         void OnDisable()
@@ -106,7 +104,7 @@ namespace LethalToolkit.AssetBundleBuilder
 
         void OnGUI()
         {
-            if (assetBundleDict.Count == 0)
+            if (assetBundleDict == null || assetBundleDict.Count == 0)
                 RefreshAssetBundlesDictionary();
 
             GUILayout.ExpandWidth(true);
@@ -183,7 +181,7 @@ namespace LethalToolkit.AssetBundleBuilder
 
             if (lastAssetBundleInfo != null)
             {
-                List<BundledAssetInfo> allAssets = new List<BundledAssetInfo>(lastAssetBundleInfo.directAssetPaths.Concat(lastAssetBundleInfo.indirectAssetPaths));
+                List<BundledAssetInfo> allAssets = new List<BundledAssetInfo>(lastAssetBundleInfo.directBundledAssetInfos.Concat(lastAssetBundleInfo.indirectBundledAssetInfos));
                 LethalToolkitSettings settings = LethalToolkitManager.Instance.LethalToolkitSettings;
 
                 EditorGUILayout.Space(5);
@@ -196,66 +194,18 @@ namespace LethalToolkit.AssetBundleBuilder
                 scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.MaxHeight(600));
 
                 EditorGUILayout.Space(5);
-                //GUI.backgroundColor = Color.white;
                 GUILayout.BeginHorizontal();
 
+                Debug.Log("Listing Columns");
 
-                List<string> infoList = new List<string>();
-
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetPathWidth));
-                LabelFieldHeader("Asset Number");
-                foreach (BundledAssetInfo asset in allAssets)
-                    infoList.Add("#" + allAssets.IndexOf(asset));
-                PopulateBundledAssetInfoList(infoList, settings.assetNumberWidth);
-                GUILayout.EndVertical();
-                infoList.Clear();
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetNameWidth));
-                LabelFieldHeader("Asset Name");
-                foreach (BundledAssetInfo asset in allAssets)
-                    infoList.Add(asset.assetName);
-                PopulateBundledAssetInfoList(infoList, settings.assetNameWidth);
-                GUILayout.EndVertical();
-                infoList.Clear();
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetTypeWidth));
-                LabelFieldHeader("Asset Type");
-                foreach (BundledAssetInfo asset in allAssets)
-                {
-                    if (asset.assetType.ToString().Contains("."))
-                        infoList.Add(asset.assetType.ToString().Substring(asset.assetType.ToString().LastIndexOf(".") + 1));
-                    else
-                        infoList.Add(asset.assetType.ToString());
-                }
-                PopulateBundledAssetInfoList(infoList, settings.assetTypeWidth);
-                GUILayout.EndVertical();
-                infoList.Clear();
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetSourceWidth));
-                LabelFieldHeader("Asset Source");
-                foreach (BundledAssetInfo asset in allAssets)
-                    infoList.Add(asset.assetSource);
-                PopulateBundledAssetInfoList(infoList, settings.assetSourceWidth);
-                GUILayout.EndVertical();
-                infoList.Clear();
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetSourceWidth));
-                LabelFieldHeader("Assembly");
-                foreach (BundledAssetInfo asset in allAssets)
-                    infoList.Add(asset.contentSourceType.ToString());
-                PopulateBundledAssetInfoList(infoList, settings.assetSourceWidth);
-                GUILayout.EndVertical();
-                infoList.Clear();
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetReferenceWidth));
-                LabelFieldHeader("AssetBundle Collection Type");
-                foreach (BundledAssetInfo asset in allAssets)
-                    infoList.Add(asset.contentReferenceType.ToString());
-                PopulateBundledAssetInfoList(infoList, settings.assetReferenceWidth);
-                GUILayout.EndVertical();
-                infoList.Clear();
-                GUILayout.BeginVertical(GUILayout.Width(settings.assetPathWidth));
-                LabelFieldHeader("Asset Path");
-                foreach (BundledAssetInfo asset in allAssets)
-                    infoList.Add(asset.assetPath);
-                PopulateBundledAssetInfoList(infoList, settings.assetPathWidth);
-                GUILayout.EndVertical();
-
+                EditorHelpers.InsertValueDataColumn("Asset Number", settings.assetPathWidth, allAssets.Select(asset => "#" + allAssets.IndexOf(asset).ToString()).ToList());
+                EditorHelpers.InsertValueDataColumn("Asset Name", settings.assetNameWidth, allAssets.Select(asset => asset.assetName).ToList());
+                EditorHelpers.InsertValueDataColumn("Asset Type", settings.assetTypeWidth, allAssets.Select(asset => asset.assetType.ToString()).ToList());
+                EditorHelpers.InsertValueDataColumn("Asset Source", settings.assetSourceWidth, allAssets.Select(asset => asset.assetSource).ToList());
+                EditorHelpers.InsertValueDataColumn("Assembly", settings.assetSourceWidth, allAssets.Select(asset => asset.contentSourceType.ToString()).ToList());
+                EditorHelpers.InsertValueDataColumn("AssetBundle Collection Type", settings.assetReferenceWidth, allAssets.Select(asset => asset.contentReferenceType.ToString()).ToList());
+                EditorHelpers.InsertValueDataColumn("Asset Path", settings.assetPathWidth, allAssets.Select(asset => asset.assetPath).ToList());
+                
                 GUILayout.EndHorizontal();
 
                 GUILayout.EndScrollView();
@@ -276,6 +226,21 @@ namespace LethalToolkit.AssetBundleBuilder
                 LethalToolkitManager.Instance.LethalToolkitSettings.onBeforeAssetBundleBuild?.Invoke(assetBundle);
 
             lastAssetBundleInfo = assetBundles.Last();
+
+
+            BuildAssetBundlesParameters newParam = new BuildAssetBundlesParameters();
+            newParam.outputPath = assetBundleDirectory;
+            newParam.bundleDefinitions = assetBundles.Select(bundle => bundle.assetBundleBuild).ToArray();
+
+            AssetBundleManifest newManifest = BuildPipeline.BuildAssetBundles(newParam);
+            if (newManifest != null)
+            {
+                var outputFiles = Directory.EnumerateFiles(assetBundleDirectory, "*", SearchOption.TopDirectoryOnly);
+                Debug.Log("Output of the build:\n\t" + string.Join("\n\t", outputFiles));
+            }
+
+            foreach (AssetBundleInfo assetBundle in assetBundles)
+                LethalToolkitManager.Instance.LethalToolkitSettings.onAfterAssetBundleBuild?.Invoke(assetBundle);
         }
 
         public void LabelFieldHeader(string text)
@@ -311,7 +276,7 @@ namespace LethalToolkit.AssetBundleBuilder
                     foreach (string path in newAssetBundleBuild.assetNames)
                     {
                         //Debug.Log("direct asset: " + path);
-                        newAssetBundleInfo.directAssetPaths.Add(new BundledAssetInfo(path, ContentReferenceType.Explicit));
+                        newAssetBundleInfo.directBundledAssetInfos.Add(new BundledAssetInfo(path, ContentReferenceType.Explicit));
                     }
 
                     foreach (string dependantAssetName in AssetDatabase.GetDependencies(newAssetBundleBuild.assetNames, recursive: false))
@@ -323,7 +288,7 @@ namespace LethalToolkit.AssetBundleBuilder
 
                     foreach (string assetPath in newAssetBundleBuild.assetNames)
                         if (!newAssetBundleInfo.AssetPaths.Contains(assetPath))
-                            newAssetBundleInfo.indirectAssetPaths.Add(new BundledAssetInfo(assetPath, ContentReferenceType.Implicit));
+                            newAssetBundleInfo.indirectBundledAssetInfos.Add(new BundledAssetInfo(assetPath, ContentReferenceType.Implicit));
 
                     newAssetBundleInfo.assetBundleBuild = newAssetBundleBuild;
                     returnList.Add(newAssetBundleInfo);

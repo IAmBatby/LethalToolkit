@@ -22,7 +22,7 @@ namespace LethalToolkit
 
         public static string Colorize(this string input)
         {
-            string hexColor = "#" + ColorUtility.ToHtmlStringRGB(EditorStyles.boldLabel.normal.textColor);
+            string hexColor = "#" + "FFFFFF";
             return new string("<color=" + hexColor + ">" + input + "</color>");
         }
 
@@ -41,25 +41,9 @@ namespace LethalToolkit
             return input;
         }
 
-        public static void InsertDataColumn(this EditorWindow editorWindow, string headerText, List<string> dataList, int columnWidth)
+        public static Type GetListType<T>(this List<T> list)
         {
-            GUIStyle headerStyle = EditorHelpers.GetNewStyle(toolkitSettings.thirdColor, fontSize: toolkitSettings.headerFontSize);
-            GUIStyle dataStyle = EditorHelpers.GetNewStyle(fontSize: toolkitSettings.textFontSize);
-
-            GUILayout.BeginVertical(GUILayout.Width(columnWidth));
-
-            EditorGUILayout.LabelField(headerText.ToBold().Colorize(), headerStyle);
-
-            int counter = 0;
-            foreach (string dataString in dataList)
-            {
-                EditorGUILayout.BeginHorizontal(EditorHelpers.GetNewStyle(EditorHelpers.GetAlternatingColor(counter)));
-                EditorGUILayout.LabelField(dataString.ToBold().Colorize(), dataStyle, GUILayout.ExpandWidth(true));
-                GUILayout.EndHorizontal();
-                counter++;
-            }
-
-            GUILayout.EndVertical();
+            return (typeof(T));
         }
     }
 }
