@@ -60,6 +60,15 @@ namespace LethalToolkit
         public ExtendedLevel lastSelectedExtendedLevel;
         public ExtendedDungeonFlow lastSelectedExtendedDungeonFlow;
 
+        [Range(0f, 1f)]
+        public float shipGizmosProgress;
+
+        public Vector3 manualShipLandingOffset;
+
+        public float gizmosDashSize;
+
+        public Mesh shipHullMesh;
+
         public static void DebugAssetBundleAssets(AssetBundleInfo assetBundleInfo)
         {
             AssetBundleBuild assetBundleBuild = assetBundleInfo.assetBundleBuild;
@@ -125,6 +134,29 @@ namespace LethalToolkit
         public static void EnableMeshColliders(AssetBundleInfo assetsBundleInfo)
         {
             ToggleMeshColliders.EnableMeshColliders(assetsBundleInfo);
+        }
+
+        public static void StripSelectableLevelScrap(AssetBundleInfo assetBundleInfo)
+        {
+            foreach (BundledAssetInfo asset in assetBundleInfo.Assets)
+                if (asset.assetType == typeof(ExtendedLevel))
+                {
+                    ExtendedLevel extendedLevel = (ExtendedLevel)AssetDatabase.LoadAssetAtPath(asset.assetPath, typeof(ExtendedLevel));
+                    if (extendedLevel.selectableLevel != null)
+                        StripBasegameAssets.StripSelectableLevelAssets(extendedLevel.selectableLevel);
+                }
+        }
+
+        public static void RestoreSelectableLevelScrap(AssetBundleInfo assetBundleInfo)
+        {
+            Debug.Log("hi");
+            foreach (BundledAssetInfo asset in assetBundleInfo.Assets)
+                if (asset.assetType == typeof(ExtendedLevel))
+                {
+                    ExtendedLevel extendedLevel = (ExtendedLevel)AssetDatabase.LoadAssetAtPath(asset.assetPath, typeof(ExtendedLevel));
+                    if (extendedLevel.selectableLevel != null)
+                        StripBasegameAssets.RestoreStrippedSelectableLevelAssets(extendedLevel.selectableLevel);
+                }
         }
     }
 }

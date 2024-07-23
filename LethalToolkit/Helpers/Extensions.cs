@@ -13,7 +13,7 @@ namespace LethalToolkit
 {
     public static class Extensions
     {
-        public static LethalToolkitSettings toolkitSettings => LethalToolkitManager.Instance.LethalToolkitSettings;
+        public static LethalToolkitSettings toolkitSettings => LethalToolkitManager.Settings;
 
         public static string ToBold(this string input)
         {

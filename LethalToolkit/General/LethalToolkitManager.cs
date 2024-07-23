@@ -11,13 +11,29 @@ namespace LethalToolkit
     {
         public static LethalToolkitManager Instance => instance;
 
-        private LethalToolkitSettings _scriptableManagerSettings;
-        [SerializeField]
-        public LethalToolkitSettings LethalToolkitSettings
+        private static string _lethalToolkitFolder;
+        public static string LethalToolkitFolder
         {
             get
             {
-                if (_scriptableManagerSettings == null)
+                if (_lethalToolkitFolder == null)
+                {
+                    string[] results = AssetDatabase.FindAssets("t:MonoScript");
+                    foreach (string result in results)
+                        if (AssetDatabase.GUIDToAssetPath(result).Contains("LethalToolkit.dll"))
+                            _lethalToolkitFolder = AssetDatabase.GUIDToAssetPath(result).Replace("LethalToolkit.dll", string.Empty);
+                }
+                return _lethalToolkitFolder;
+            }
+        }
+
+        [SerializeField]
+        private LethalToolkitSettings _scriptableManagerSettings;
+        public static LethalToolkitSettings Settings
+        {
+            get
+            {
+                if (Instance._scriptableManagerSettings == null)
                 {
                     IEnumerable<ScriptableObject> scriptableObjects;
                     scriptableObjects = UnityEditor.AssetDatabase.FindAssets("t:ScriptableObject")
@@ -25,9 +41,14 @@ namespace LethalToolkit
                     .Select(x => UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(x));
                     foreach (ScriptableObject item in scriptableObjects)
                         if (item.GetType() == typeof(LethalToolkitSettings))
-                            _scriptableManagerSettings = ((LethalToolkitSettings)item);
+                        {
+                            Instance._scriptableManagerSettings = ((LethalToolkitSettings)item);
+                            Instance.Save(true);
+                        }
                 }
-                return (_scriptableManagerSettings);
+                if (Instance._scriptableManagerSettings == null)
+                    Debug.LogError("Failed To Get LethalToolkitSettings");
+                return (Instance._scriptableManagerSettings);
             }
         }
 
@@ -37,14 +58,33 @@ namespace LethalToolkit
             {
                 Debug.Log("Trying to open " + scenePath);
                 EditorSceneManager.OpenScene(scenePath, sceneMode);
+                ///
             }
         }
+
     }
 
     public static class LethalToolkitMenuItems
     {
         public static LethalToolkitManager lethalToolkitManager => LethalToolkitManager.Instance;
-        public static LethalToolkitSettings lethalToolkitSettings => lethalToolkitManager.LethalToolkitSettings;
+        public static LethalToolkitSettings lethalToolkitSettings => LethalToolkitManager.Settings;
+
+        [MenuItem("LethalToolkit/Close All")]
+        static void CloseAllWindows()
+        {
+            //AssetBundleBuilderWindow.CloseWindow();
+            //ExtendedDungeonFlowValidatorWindow.CloseWindow();
+            //ExtendedLevelValidatorWindow.CloseWindow();
+        }
+
+        [MenuItem("LethalToolkit/Debug Path")]
+        static void DebugPath()
+        {
+            string[] results = AssetDatabase.FindAssets("t:MonoScript");
+            foreach (string result in results)
+                if (AssetDatabase.GUIDToAssetPath(result).Contains("LethalToolkit.dll"))
+                    Debug.Log(AssetDatabase.GUIDToAssetPath(result));
+        }
 
         [MenuItem("LethalToolkit/Open LethalToolkit Settings")]
         static void SelectLethalToolkitSettings()

@@ -25,21 +25,6 @@ namespace LethalToolkit
 {
     public class ExtendedLevelValidatorWindow : EditorWindow
     {
-        private static Color _DefaultBackgroundColor;
-        public static Color DefaultBackgroundColor
-        {
-            get
-            {
-                if (_DefaultBackgroundColor.a == 0)
-                {
-                    var method = typeof(EditorGUIUtility)
-                        .GetMethod("GetDefaultBackgroundColor", BindingFlags.NonPublic | BindingFlags.Static);
-                    _DefaultBackgroundColor = (Color)method.Invoke(null, null);
-                }
-                return _DefaultBackgroundColor;
-            }
-        }
-
         public static ExtendedLevelValidatorWindow window;
 
         public UnityEngine.Object extendedLevelObject;
@@ -58,34 +43,41 @@ namespace LethalToolkit
 
         public DynamicTogglePopup dynamicPopup = new DynamicTogglePopup(new string[] { "None", "All", "EntranceTeleport", "AudioReverbTrigger", "SmokeTest" });
 
+        public static LethalToolkitSettings settings;
 
-        public LethalToolkitSettings settings = LethalToolkitManager.Instance.LethalToolkitSettings;
+        public static bool collapsableSceneRootObjects;
+        public static bool collapsableDungeonTests;
+        public static bool collapsableNavMeshSurfaceTests;
+        public static bool collapsableAiNodesTest;
+        public static bool collapsableEntranceTeleportTests;
 
         [MenuItem("LethalToolkit/Tools/ExtendedLevel Validator")]
         public static void OpenWindow()
         {
+            Debug.Log("Opening Windows");
             if (window != null)
             {
                 window.Close();
                 window = null;
             }
+            settings = LethalToolkitManager.Settings;
             sceneHierarchy = null;
             window = GetWindow<ExtendedLevelValidatorWindow>("LethalToolkit: ExtendedLevel Validator");
-
         }
 
         public void OnGUI()
         {
+            Debug.Log("On GUI!");
             GUILayout.ExpandWidth(true);
             GUILayout.ExpandHeight(true);
-            backgroundColor = DefaultBackgroundColor;
+            backgroundColor = EditorHelpers.DefaultBackgroundColor;
 
             defaultFontSize = GUI.skin.font.fontSize;
 
             GUI.skin.label.richText = true;
             GUI.skin.textField.richText = true;
 
-            extendedLevelObject = LethalToolkitManager.Instance.LethalToolkitSettings.lastSelectedExtendedLevel;
+            extendedLevelObject = LethalToolkitManager.Settings.lastSelectedExtendedLevel;
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("ExtendedLevel", EditorStyles.boldLabel);
@@ -95,7 +87,7 @@ namespace LethalToolkit
             if (extendedLevelObject != null && extendedLevelObject is ExtendedLevel)
             {
                 ExtendedLevel extendedLevel = (ExtendedLevel)extendedLevelObject;
-                LethalToolkitManager.Instance.LethalToolkitSettings.lastSelectedExtendedLevel = extendedLevel;
+                LethalToolkitManager.Settings.lastSelectedExtendedLevel = extendedLevel;
                 currentlySelectedExtendedLevel = extendedLevel;
                 if (extendedLevel.selectableLevel == null)
                     AddTextLine("SelectableLevel: Null", TextDirection.Right);
@@ -118,7 +110,7 @@ namespace LethalToolkit
             }
             else
             {
-                LethalToolkitManager.Instance.LethalToolkitSettings.lastSelectedExtendedLevel = null;
+                LethalToolkitManager.Settings.lastSelectedExtendedLevel = null;
                 currentlySelectedExtendedLevel = null;
             }
 
@@ -142,10 +134,14 @@ namespace LethalToolkit
 
             EditorGUILayout.Space(10);
 
-            AddTextLine("Scene Root Objects", textDirection: TextDirection.Right, editorStyles: EditorStyles.boldLabel, color: settings.thirdColor);
+
+            //AddTextLine("Scene Root Objects", textDirection: TextDirection.Right, editorStyles: EditorStyles.boldLabel, color: settings.thirdColor);
+            collapsableSceneRootObjects = EditorGUILayout.BeginFoldoutHeaderGroup(collapsableSceneRootObjects, "Scene Tests", EditorStyles.boldLabel);
 
             foreach (GameObject rootObject in rootObjects)
                 AddTextLineAlternating("    " + rootObject.name, TextDirection.Right);
+
+            EditorGUILayout.EndFoldoutHeaderGroup();
 
             EditorGUILayout.Space(5);
 
@@ -280,7 +276,8 @@ namespace LethalToolkit
         {
             EditorGUILayout.Space(15);
             EditorGUILayout.BeginHorizontal(BackgroundStyle.Get(settings.thirdColor));
-            AddTextLine("Dungeon Tests".ToBold(), Color.white, TextDirection.None);
+            //AddTextLine("Dungeon Tests".ToBold(), Color.white, TextDirection.None);
+            collapsableDungeonTests = EditorGUILayout.BeginFoldoutHeaderGroup(collapsableDungeonTests, "Dungeon Tests", EditorStyles.boldLabel);
             EditorGUILayout.EndHorizontal();
 
             GameObject dungeonGenerator = GameObject.FindGameObjectWithTag("DungeonGenerator");
@@ -305,6 +302,8 @@ namespace LethalToolkit
                     AddTextLine("DungeonFlow: ".ToBold(), Color.white, TextDirection.None);
                     EditorGUILayout.ObjectField(runtimeDungeon.Generator.DungeonFlow, typeof(DungeonFlow), true);
                     EditorGUILayout.EndHorizontal();
+                    if (runtimeDungeon.Generator.DungeonFlow != null)
+                        AddTextLine("Warning, DungeonFlow Reference Should Be Empty On Custom ExtendedLevels.".ToBold().Colorize(Color.yellow));
                     if (runtimeDungeon.Root != null)
                     {
                         EditorGUILayout.BeginHorizontal();
@@ -326,9 +325,11 @@ namespace LethalToolkit
                     EditorGUILayout.EndHorizontal();
                 }
             }
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(15);
             EditorGUILayout.BeginHorizontal(BackgroundStyle.Get(settings.thirdColor));
-            AddTextLine("NavMeshSurface Tests".ToBold(), Color.white, TextDirection.None);
+            //AddTextLine("NavMeshSurface Tests".ToBold(), Color.white, TextDirection.None);
+            collapsableNavMeshSurfaceTests = EditorGUILayout.BeginFoldoutHeaderGroup(collapsableNavMeshSurfaceTests, "NavMeshSurface Tests", EditorStyles.boldLabel);
             EditorGUILayout.EndHorizontal();
 
             GameObject environment = GameObject.FindGameObjectWithTag("OutsideLevelNavMesh");
@@ -352,13 +353,20 @@ namespace LethalToolkit
                         EditorGUILayout.ObjectField(surface.navMeshData, typeof(NavMeshData), true);
                         EditorGUILayout.EndHorizontal();
                     }
+                    else
+                        AddTextLine("Could Not Find NavMeshData Asset!".ToBold().Colorize(Color.red));
                 }
+                else
+                    AddTextLine("Could Not Find NavMeshSurface Component!".ToBold().Colorize(Color.red));
             }
+            else
+                AddTextLine("Could Not Find Environment!".ToBold().Colorize(Color.red));
 
-
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(15);
             EditorGUILayout.BeginHorizontal(BackgroundStyle.Get(settings.thirdColor));
-            AddTextLine("AINode Tests".ToBold(), Color.white, TextDirection.None);
+            //AddTextLine("AINode Tests".ToBold(), Color.white, TextDirection.None);
+            collapsableAiNodesTest = EditorGUILayout.BeginFoldoutHeaderGroup(collapsableAiNodesTest, "AI Nodes Tests", EditorStyles.boldLabel);
             EditorGUILayout.EndHorizontal();
 
             List<SpawnableOutsideObject> spawnableOutsideObjects = currentlySelectedExtendedLevel.selectableLevel.spawnableOutsideObjects.Select(s => s.spawnableObject).ToList();
@@ -389,21 +397,24 @@ namespace LethalToolkit
                 }
                 else
                     AddTextLine("Distance: ".ToBold() + hit.distance.ToString("F2").Colorize(Color.green), TextDirection.None);
-                if (Physics.Raycast(aiNode.transform.position, hit.position, out RaycastHit raycastHit, Mathf.Infinity))
+                if (hit.hit == true && hit.distance != Mathf.Infinity && Physics.Raycast(aiNode.transform.position, hit.position, out RaycastHit raycastHit, Mathf.Infinity))
                 {
                     if (spawnableOutsideObjectTags.Contains(raycastHit.collider.gameObject.tag))
                         AddTextLine("Floor Tag: ".ToBold() + raycastHit.collider.gameObject.tag.Colorize(Color.green), TextDirection.None);
                     else
                         AddTextLine("Floor Tag: ".ToBold() + raycastHit.collider.gameObject.tag.Colorize(Color.red), TextDirection.None);
                 }
+                else
+                    AddTextLine("Floor Tag: ".ToBold() + "N/A".Colorize(Color.red), TextDirection.None);
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
-
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(15);
             EditorGUILayout.BeginHorizontal(BackgroundStyle.Get(settings.thirdColor));
-            AddTextLine("Entrance Teleport Tests".ToBold(), Color.white, TextDirection.None);
+            //AddTextLine("Entrance Teleport Tests".ToBold(), Color.white, TextDirection.None);
+            collapsableEntranceTeleportTests = EditorGUILayout.BeginFoldoutHeaderGroup(collapsableEntranceTeleportTests, "Entrance Teleports Tests", EditorStyles.boldLabel);
             EditorGUILayout.EndHorizontal();
 
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.MaxHeight(300));
@@ -432,7 +443,7 @@ namespace LethalToolkit
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
 
-
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(15);
             EditorGUILayout.BeginHorizontal(BackgroundStyle.Get(settings.thirdColor));
             AddTextLine("Misc. Tests".ToBold(), Color.white, TextDirection.None);
@@ -511,7 +522,7 @@ namespace LethalToolkit
         {
             string returnString = string.Empty;
 
-            returnString += "    " + GetSpacedOffset(Mathf.RoundToInt(GetParentCount(gameObject) * LethalToolkitManager.Instance.LethalToolkitSettings.spaceMultiplier));
+            returnString += "    " + GetSpacedOffset(Mathf.RoundToInt(GetParentCount(gameObject) * LethalToolkitManager.Settings.spaceMultiplier));
             returnString += gameObject.name;
 
             if (withComponents == true)
@@ -569,6 +580,11 @@ namespace LethalToolkit
         {
             if (cachedColor == null)
                 cachedColor = backgroundColor;
+            if (cachedColor == null)
+            {
+                Debug.LogError("Cached Colour Null!");
+                cachedColor = Color.white;
+            }
 
             GUIStyle newStyle = new GUIStyle();
             if (editorStyles == null)
@@ -612,8 +628,8 @@ namespace LethalToolkit
         public bool flip;
         public Color GetFlipColor()
         {
-            Color firstColor = LethalToolkitManager.Instance.LethalToolkitSettings.firstColor;
-            Color secondColor = LethalToolkitManager.Instance.LethalToolkitSettings.secondColor;
+            Color firstColor = LethalToolkitManager.Settings.firstColor;
+            Color secondColor = LethalToolkitManager.Settings.secondColor;
 
             if (flip == true)
             {

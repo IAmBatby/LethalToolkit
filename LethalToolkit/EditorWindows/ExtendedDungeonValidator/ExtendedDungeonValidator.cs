@@ -35,18 +35,25 @@ namespace LethalToolkit
         public Vector2 scrollPos;
 
 
-        public LethalToolkitSettings settings = LethalToolkitManager.Instance.LethalToolkitSettings;
+        public static LethalToolkitSettings settings;
 
         [MenuItem("LethalToolkit/Tools/ExtendedDungeonFlow Validator")]
         public static void OpenWindow()
         {
+            Debug.Log("Opening Windows");
+            if (window != null)
+            {
+                window.Close();
+                window = null;
+            }
+            settings = LethalToolkitManager.Settings;
             dynamicPopup.Clear();
             window = GetWindow<ExtendedDungeonFlowValidatorWindow>("LethalToolkit: ExtendedDungeonFlow Validator");
         }
 
-
         public void OnGUI()
         {
+            Debug.Log("On GUI!");
             GUILayout.ExpandWidth(true);
             GUILayout.ExpandHeight(true);
             backgroundColor = EditorHelpers.DefaultBackgroundColor;

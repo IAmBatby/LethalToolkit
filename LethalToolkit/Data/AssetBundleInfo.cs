@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mono.Cecil;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -18,9 +19,28 @@ namespace LethalToolkit
     public class AssetBundleInfo
     {
         public AssetBundleBuild assetBundleBuild;
+        public string fullAssetBundleName
+        {
+            get
+            {
+                string returnString = string.Empty;
+                if (assetBundleBuild.assetBundleName != null)
+                    returnString += assetBundleBuild.assetBundleName;
+                if (assetBundleBuild.assetBundleVariant != null)
+                    returnString += assetBundleBuild.assetBundleVariant;
+                return (returnString);
+            }
+        }
         public List<BundledAssetInfo> directBundledAssetInfos = new List<BundledAssetInfo>();
         public List<BundledAssetInfo> indirectBundledAssetInfos = new List<BundledAssetInfo>();
         public List<BundledAssetInfo> bundledAssetInfos => directBundledAssetInfos.Concat(indirectBundledAssetInfos).ToList();
+        public bool isSceneBundle;
+
+        public static List<string> blacklistedFileExtensions = new List<string>()
+        {
+            ".cs",
+            ".dll"
+        };
 
         public List<string> AssetPaths
         {
@@ -33,6 +53,45 @@ namespace LethalToolkit
                     paths.Add(indirectAsset.assetPath);
                 return (paths);
             }
+        }
+
+        public List<BundledAssetInfo> Assets => directBundledAssetInfos.Concat(indirectBundledAssetInfos).ToList();
+
+        public AssetBundleInfo()
+        {
+            assetBundleBuild = new AssetBundleBuild();
+        }
+
+        public bool ValidAsset(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath) == true)
+                return (false);
+
+            string assetAssetBundleName = string.Empty;
+            assetAssetBundleName += AssetDatabase.GetImplicitAssetBundleName(assetPath);
+            assetAssetBundleName += AssetDatabase.GetImplicitAssetBundleVariantName(assetPath);
+            assetAssetBundleName = assetAssetBundleName.Replace(".", string.Empty);
+            
+            if (assetAssetBundleName != string.Empty)
+            {
+                //Debug.Log(assetPath + ": " + assetAssetBundleName + " , " + fullAssetBundleName.Replace(".", string.Empty));
+                if (assetAssetBundleName != fullAssetBundleName.Replace(".", string.Empty))
+                    return (false);
+            }
+
+            if ((AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset)) != isSceneBundle)
+                return (false);
+
+            if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(MonoScript))
+                return (false);
+
+            if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(AssemblyDefinition))
+                return (false);
+
+            if (AssetPaths.Contains(assetPath))
+                return (false);
+
+            return (true);
         }
     }
 
@@ -61,7 +120,7 @@ namespace LethalToolkit
 
             if (assetObject == null)
             {
-                Debug.LogError("Failed to create new BundledAssetInfo!");
+                Debug.LogError("Failed to create new BundledAssetInfo! Provided Path Was: " + newAssetPath);
                 return;
             }
 

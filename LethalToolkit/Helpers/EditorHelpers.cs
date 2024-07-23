@@ -12,14 +12,30 @@ namespace LethalToolkit
 {
     public class EditorHelpers
     {
-        public static LethalToolkitSettings toolkitSettings => LethalToolkitManager.Instance.LethalToolkitSettings;
+        public static LethalToolkitSettings toolkitSettings => LethalToolkitManager.Settings;
+
+
+        private static Color _DefaultBackgroundColor;
+        public static Color DefaultBackgroundColor
+        {
+            get
+            {
+                if (_DefaultBackgroundColor.a == 0)
+                {
+                    var method = typeof(EditorGUIUtility)
+                        .GetMethod("GetDefaultBackgroundColor", BindingFlags.NonPublic | BindingFlags.Static);
+                    _DefaultBackgroundColor = (Color)method.Invoke(null, null);
+                }
+                return _DefaultBackgroundColor;
+            }
+        }
 
         public static Color GetAlternatingColor(int arrayIndex)
         {
             if (arrayIndex % 2 == 0)
-                return (LethalToolkitManager.Instance.LethalToolkitSettings.firstColor);
+                return (LethalToolkitManager.Settings.firstColor);
             else
-                return (LethalToolkitManager.Instance.LethalToolkitSettings.secondColor);
+                return (LethalToolkitManager.Settings.secondColor);
         }
 
         public static GUIStyle GetNewStyle(bool enableRichText = true, int fontSize = -1)
@@ -90,19 +106,46 @@ namespace LethalToolkit
             EditorGUILayout.EndHorizontal();
         }
 
-        private static Color _DefaultBackgroundColor;
-        public static Color DefaultBackgroundColor
+        Color cachedColor;
+        public void AddTextLine(string text, TextDirection textDirection = TextDirection.None, GUIStyle editorStyles = null, int width = 0, int height = 0)
         {
-            get
+            if (cachedColor == null)
+                cachedColor = DefaultBackgroundColor;
+            if (cachedColor == null)
             {
-                if (_DefaultBackgroundColor.a == 0)
-                {
-                    var method = typeof(EditorGUIUtility)
-                        .GetMethod("GetDefaultBackgroundColor", BindingFlags.NonPublic | BindingFlags.Static);
-                    _DefaultBackgroundColor = (Color)method.Invoke(null, null);
-                }
-                return _DefaultBackgroundColor;
+                Debug.LogError("Cached Colour Null!");
+                cachedColor = Color.white;
             }
+
+            GUIStyle newStyle = new GUIStyle();
+            if (editorStyles == null)
+                editorStyles = newStyle;
+
+            editorStyles.richText = true;
+            text = text.Colorize(EditorStyles.boldLabel.normal.textColor);
+
+            if (textDirection == TextDirection.BeginVertical)
+            {
+                EditorGUILayout.BeginVertical(BackgroundStyle.Get(cachedColor));
+                EditorGUILayout.LabelField(text, editorStyles);
+                EditorGUILayout.EndVertical();
+            }
+            else if (textDirection == TextDirection.BeginHorizontal)
+            {
+                EditorGUILayout.BeginHorizontal(BackgroundStyle.Get(cachedColor));
+                EditorGUILayout.LabelField(text, editorStyles);
+                EditorGUILayout.EndHorizontal();
+            }
+            else if (textDirection == TextDirection.None)
+                EditorGUILayout.LabelField(text, editorStyles, GUILayout.ExpandWidth(false));
+
+            cachedColor = DefaultBackgroundColor;
+        }
+
+        public void AddTextLine(string text, Color color, TextDirection textDirection = TextDirection.BeginHorizontal, GUIStyle editorStyles = null)
+        {
+            cachedColor = color;
+            AddTextLine(text, textDirection, editorStyles);
         }
 
         public static List<GameObject> GetPrefabsWithType(Type type)
@@ -120,6 +163,30 @@ namespace LethalToolkit
                     returnList.Add(prefab);
             }
                 return (returnList);
+        }
+
+        public static void SerializeDictionary<K, V>(ref Dictionary<K, V> dictionary, ref List<K> keys, ref List<V> values)
+        {
+            if (dictionary == null)
+                dictionary = new Dictionary<K, V>();
+            keys.Clear();
+            values.Clear();
+            foreach (KeyValuePair<K, V> kvp in dictionary)
+            {
+                keys.Add(kvp.Key);
+                values.Add(kvp.Value);
+            }
+        }
+
+        public static void DeserializeDictionary<K, V>(ref Dictionary<K, V> dictionary, ref List<K> keys, ref List<V> values)
+        {
+            if (dictionary == null)
+                dictionary = new Dictionary<K, V>();
+            else
+                dictionary.Clear();
+
+            for (int i = 0; i != Math.Min(keys.Count, values.Count); i++)
+                dictionary.Add(keys[i], values[i]);
         }
     }
 }

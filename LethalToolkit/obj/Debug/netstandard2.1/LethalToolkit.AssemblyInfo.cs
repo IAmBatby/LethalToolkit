@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("A Unity Plugin to assist with custom content creation in Lethal Company.")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0+51676d56071229bbb78699781921b26aaa8d3893")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0+a576833e276cd34112d637b533c64a7f50b756d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("LethalToolkit")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LethalToolkit")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.0.0.0")]
